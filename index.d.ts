@@ -1,4 +1,4 @@
-declare module "solr-node" {
+declare module "enzorobaina-solr-node" {
   class Client {
     constructor(options: Client.ClientOptions);
 

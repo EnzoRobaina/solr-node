@@ -1,12 +1,12 @@
 {
-  "name": "solr-node",
+  "name": "enzorobaina-solr-node",
   "version": "1.2.1",
   "description": "Simple Solr Node Client Project",
   "main": "index.js",
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/godong9/solr-node.git"
+    "url": "git+https://github.com/EnzoRobaina/solr-node.git"
   },
   "keywords": [
     "solr",
@@ -21,7 +21,7 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/godong9/solr-node/issues"
+    "url": "https://github.com/EnzoRobaina/solr-node/issues"
   },
   "homepage": "https://github.com/godong9/solr-node/wiki",
   "devDependencies": {
