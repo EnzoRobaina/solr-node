@@ -13,7 +13,8 @@ import {
   isString,
   isArray,
 } from "underscore";
-var logger = require("@log4js-node/log4js-api").getLogger("solr-node");
+import log4js from "@log4js-node/log4js-api";
+var logger = log4js.getLogger("solr-node");
 import { stringify } from "querystring";
 
 /**

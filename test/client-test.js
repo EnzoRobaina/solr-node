@@ -8,7 +8,7 @@
 import { use, expect as _expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import nock, { disableNetConnect, enableNetConnect, cleanAll } from "nock";
-import Client from "../lib/client";
+import Client from "../src/client";
 
 use(chaiAsPromised);
 var expect = _expect;

@@ -6,7 +6,7 @@
  * Require modules
  */
 import { expect } from "chai";
-import Query from "../lib/query";
+import Query from "../src/query";
 
 describe("Query", function () {
   describe("#constructor", function () {
