@@ -27,6 +27,7 @@ declare module "enzorobaina-solr-node" {
     ping<R extends object>(): Promise<Client.SolrResponse<R>>;
     commit<R extends object>(): Promise<Client.SolrResponse<R>>;
     softCommit<R extends object>(): Promise<Client.SolrResponse<R>>;
+    stream<R extends object>(query?: Client.Query | string): Promise<R[]>;
   }
 
   namespace Client {
@@ -47,7 +48,7 @@ declare module "enzorobaina-solr-node" {
       termsQuery(params: TermsQueryParams | string): this;
       mltQuery(params: MoreLikeThisQueryParams | string): this;
       spellcheckQuery(params: SpellcheckQueryParams | string): this;
-      suggestQuery(params: SuggestQueryParams | string): this;
+      suggestQuery(params: SuggestParams | string): this;
       facetQuery(params: FacetQueryParams | string): this;
       groupQuery(params: GroupQueryParams | string): this;
       hlQuery(params: HighlightQueryParams | string): this;

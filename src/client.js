@@ -50,6 +50,7 @@ class Client {
     this.UPDATE_EXTRACT_PATH = "update/extract";
     this.PING_PATH = "admin/ping";
     this.SUGGEST_PATH = "suggest";
+    this.STREAM_PATH = "stream";
   }
   /**
    * Make host url
@@ -194,6 +195,35 @@ class Client {
     };
 
     return this._callSolrServer(requestFullPath, options, finalCallback);
+  }
+  /**
+   * Stream
+   *
+   * @param {Object|String} query
+   * @param {Function} finalCallback - (err, result)
+   *
+   * @returns {Undefined|Promise}
+   */
+  stream(query) {
+    return this._requestGet(this.STREAM_PATH, query).then((response) => {
+      const result = response["result-set"];
+
+      if (!result || !result.docs || !result.docs.length) {
+        throw new Error("No result-set/docs in response");
+      }
+
+      const error = result.docs[result.docs.length - 1]["EXCEPTION"];
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      if (result.docs[result.docs.length - 1]["EOF"]) {
+        result.docs.pop(); // trims EOF
+      }
+
+      return result.docs;
+    });
   }
   /**
    * Make Query instance and return
