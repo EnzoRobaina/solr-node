@@ -5,16 +5,16 @@ declare module "enzorobaina-solr-node" {
     query(): Client.Query;
 
     search<R extends object>(
-      query: Client.Query | string
+      query: Client.QueryParams
     ): Promise<Client.SolrResponse<R>>;
     terms<R extends object>(
-      query: Client.Query | string
+      query: Client.QueryParams
     ): Promise<Client.SolrResponse<R>>;
     mlt<R extends object>(
-      query: Client.Query | string
+      query: Client.QueryParams
     ): Promise<Client.SolrResponse<R>>;
     spell<R extends object>(
-      query: Client.Query | string
+      query: Client.QueryParams
     ): Promise<Client.SolrResponse<R>>;
     update<R extends object>(
       data: object,
@@ -27,7 +27,7 @@ declare module "enzorobaina-solr-node" {
     ping<R extends object>(): Promise<Client.SolrResponse<R>>;
     commit<R extends object>(): Promise<Client.SolrResponse<R>>;
     softCommit<R extends object>(): Promise<Client.SolrResponse<R>>;
-    stream<R extends object>(query?: Client.Query | string): Promise<R[]>;
+    stream<R extends object>(query?: Client.QueryParams): Promise<R[]>;
   }
 
   namespace Client {
@@ -202,6 +202,10 @@ declare module "enzorobaina-solr-node" {
       regexPattern?: string;
       regexMaxAnalyzedChars?: number;
       preserveMulti?: boolean;
+    }
+
+    interface QueryParams {
+      [key: string]: any;
     }
   }
 

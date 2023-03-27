@@ -117,15 +117,8 @@ class Client {
    * @returns {undefined|Promise} - When there's no callback function it returns a Promise
    */
   _requestGet(path, query, finalCallback) {
-    var params, options, requestPrefixUrl, requestFullPath;
+    var requestBody, options, requestPrefixUrl, requestFullPath;
 
-    if (query instanceof Query) {
-      params = query.toString();
-    } else if (isString(query)) {
-      params = query;
-    } else {
-      params = "q=*:*";
-    }
     requestPrefixUrl = this._makeHostUrl(
       this.options.protocol,
       this.options.host,
@@ -133,20 +126,30 @@ class Client {
       this.options.user,
       this.options.password
     );
-    requestPrefixUrl +=
-      "/" + [this.options.rootPath, this.options.core, path].join("/");
+    requestFullPath =
+      requestPrefixUrl +
+      "/" +
+      [this.options.rootPath, this.options.core, path].join("/");
 
-    requestFullPath = requestPrefixUrl + "?" + params;
-
-    logger.debug("[_requestGet] requestFullPath: ", requestFullPath);
+    requestBody = {
+      params: query,
+    };
 
     options = {
-      method: "GET",
+      method: "POST",
+      body: JSON.stringify(requestBody),
       headers: {
         accept: "application/json; charset=utf-8",
+        "content-type": "application/json; charset=utf-8",
       },
     };
 
+    logger.debug(
+      "[_requestGet] requestFullPath: ",
+      requestFullPath,
+      "options: ",
+      options
+    );
     return this._callSolrServer(requestFullPath, options, finalCallback);
   }
   /**
@@ -381,7 +384,7 @@ class Client {
    * @returns {Undefined|Promise}
    */
   ping(finalCallback) {
-    return this._requestGet(this.PING_PATH, "", finalCallback);
+    return this._requestGet(this.PING_PATH, {}, finalCallback);
   }
   /**
    * Commit

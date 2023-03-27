@@ -126,24 +126,21 @@ var Client = /*#__PURE__*/function () {
   }, {
     key: "_requestGet",
     value: function _requestGet(path, query, finalCallback) {
-      var params, options, requestPrefixUrl, requestFullPath;
-      if (query instanceof _query["default"]) {
-        params = query.toString();
-      } else if ((0, _underscore.isString)(query)) {
-        params = query;
-      } else {
-        params = "q=*:*";
-      }
+      var requestBody, options, requestPrefixUrl, requestFullPath;
       requestPrefixUrl = this._makeHostUrl(this.options.protocol, this.options.host, this.options.port, this.options.user, this.options.password);
-      requestPrefixUrl += "/" + [this.options.rootPath, this.options.core, path].join("/");
-      requestFullPath = requestPrefixUrl + "?" + params;
-      logger.debug("[_requestGet] requestFullPath: ", requestFullPath);
+      requestFullPath = requestPrefixUrl + "/" + [this.options.rootPath, this.options.core, path].join("/");
+      requestBody = {
+        params: query
+      };
       options = {
-        method: "GET",
+        method: "POST",
+        body: JSON.stringify(requestBody),
         headers: {
-          accept: "application/json; charset=utf-8"
+          accept: "application/json; charset=utf-8",
+          "content-type": "application/json; charset=utf-8"
         }
       };
+      logger.debug("[_requestGet] requestFullPath: ", requestFullPath, "options: ", options);
       return this._callSolrServer(requestFullPath, options, finalCallback);
     }
     /**
@@ -371,7 +368,7 @@ var Client = /*#__PURE__*/function () {
   }, {
     key: "ping",
     value: function ping(finalCallback) {
-      return this._requestGet(this.PING_PATH, "", finalCallback);
+      return this._requestGet(this.PING_PATH, {}, finalCallback);
     }
     /**
      * Commit
