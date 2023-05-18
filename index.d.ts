@@ -2,63 +2,38 @@ declare module "enzorobaina-solr-node" {
   class Client {
     constructor(options: Client.ClientOptions);
 
-    query(): Client.Query;
-
     search<R extends object>(
-      query: Client.Query | string
+      query: Client.QueryParams,
+      method?: "GET" | "POST"
     ): Promise<Client.SolrResponse<R>>;
     terms<R extends object>(
-      query: Client.Query | string
+      query: Client.QueryParams
     ): Promise<Client.SolrResponse<R>>;
     mlt<R extends object>(
-      query: Client.Query | string
+      query: Client.QueryParams
     ): Promise<Client.SolrResponse<R>>;
     spell<R extends object>(
-      query: Client.Query | string
+      query: Client.QueryParams
     ): Promise<Client.SolrResponse<R>>;
     update<R extends object>(
       data: object,
       options?: Client.UpdateOptions
     ): Promise<Client.SolrResponse<R>>;
     delete<R extends object>(
-      query?: Client.Query | string,
+      query?: Client.QueryParams,
       options?: Client.UpdateOptions
     ): Promise<Client.SolrResponse<R>>;
     ping<R extends object>(): Promise<Client.SolrResponse<R>>;
     commit<R extends object>(): Promise<Client.SolrResponse<R>>;
     softCommit<R extends object>(): Promise<Client.SolrResponse<R>>;
     stream<R extends object>(
-      query?: Client.Query | string,
-      trimEof?: boolean
+      query?: Client.QueryParams,
+      trimEof?: boolean,
+      method?: "GET" | "POST"
     ): Promise<R[]>;
   }
 
   namespace Client {
-    export class Query {
-      dismax(): this;
-      edismax(): this;
-      q(params: object | string): this;
-      qop(params: string): this;
-      fl(params: string): this;
-      start(params: string | number): this;
-      rows(params: string | number): this;
-      sort(params: object): this;
-      fq(params: string): this;
-      df(params: string): this;
-      wt(params: string): this;
-      addParams(params: Array<{ field: string; value: any }>): this;
-      spatial(params: { pt: string; sfield: string; d: string | number }): this;
-      termsQuery(params: TermsQueryParams | string): this;
-      mltQuery(params: MoreLikeThisQueryParams | string): this;
-      spellcheckQuery(params: SpellcheckQueryParams | string): this;
-      suggestQuery(params: SuggestParams | string): this;
-      facetQuery(params: FacetQueryParams | string): this;
-      groupQuery(params: GroupQueryParams | string): this;
-      hlQuery(params: HighlightQueryParams | string): this;
-
-      toString(): string;
-    }
-
     export interface SolrResponse<T> {
       responseHeader: {
         status: number;
@@ -205,6 +180,10 @@ declare module "enzorobaina-solr-node" {
       regexPattern?: string;
       regexMaxAnalyzedChars?: number;
       preserveMulti?: boolean;
+    }
+
+    interface QueryParams {
+      [key: string]: any;
     }
   }
 

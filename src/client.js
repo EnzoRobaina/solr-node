@@ -10,7 +10,6 @@ import fetch from "node-fetch";
 import log4js from "@log4js-node/log4js-api";
 var logger = log4js.getLogger("solr-node");
 import { stringify } from "querystring";
-import Query from "./query";
 
 /**
  * Solr Node Client
@@ -82,12 +81,11 @@ class Client {
    *
    * @param requestFullPath - URL sent to Solr server
    * @param {Object} fetchOptions - options for fetch method
-   * @param {Function} finalCallback - (err, result)
    *
-   * @returns {undefined|Promise} - When there's no callback function it returns a Promise
+   * @returns {Promise} - it returns a Promise
    */
-  _callSolrServer(requestFullPath, fetchOptions, finalCallback) {
-    var result = fetch(requestFullPath, fetchOptions).then(function (res) {
+  _callSolrServer(requestFullPath, fetchOptions) {
+    return fetch(requestFullPath, fetchOptions).then(function (res) {
       if (res.status !== 200) {
         logger.error(res);
         throw new Error("Solr server error: " + res.status);
@@ -95,37 +93,26 @@ class Client {
         return res.json();
       }
     });
-    if (typeof finalCallback === "function") {
-      result
-        .then(function (json) {
-          finalCallback(null, json);
-        })
-        .catch(function (err) {
-          finalCallback(err.message);
-        });
-    } else {
-      return result;
-    }
   }
   /**
    * Request get
    *
    * @param {String} path - target path
-   * @param {Object|String} query - query
-   * @param {Function} finalCallback - (err, result)
+   * @param {Object} query - query
    *
-   * @returns {undefined|Promise} - When there's no callback function it returns a Promise
+   * @returns {Promise} - it returns a Promise
    */
-  _requestGet(path, query, finalCallback) {
-    var params, options, requestPrefixUrl, requestFullPath;
-
-    if (query instanceof Query) {
-      params = query.toString();
-    } else if (isString(query)) {
-      params = query;
-    } else {
-      params = "q=*:*";
+  _requestGet(
+    path,
+    query,
+    headers = {
+      accept: "application/json; charset=utf-8",
     }
+  ) {
+    var options, requestPrefixUrl, requestFullPath;
+
+    const params = new URLSearchParams(query);
+
     requestPrefixUrl = this._makeHostUrl(
       this.options.protocol,
       this.options.host,
@@ -136,18 +123,22 @@ class Client {
     requestPrefixUrl +=
       "/" + [this.options.rootPath, this.options.core, path].join("/");
 
-    requestFullPath = requestPrefixUrl + "?" + params;
+    requestFullPath = requestPrefixUrl + "?" + params.toString();
 
     logger.debug("[_requestGet] requestFullPath: ", requestFullPath);
 
     options = {
       method: "GET",
-      headers: {
-        accept: "application/json; charset=utf-8",
-      },
+      headers,
     };
 
-    return this._callSolrServer(requestFullPath, options, finalCallback);
+    console.log("doing get", {
+      requestFullPath,
+      options,
+      params: params.toString(),
+    });
+
+    return this._callSolrServer(requestFullPath, options);
   }
   /**
    * Request post
@@ -155,20 +146,21 @@ class Client {
    * @param {String} path - target path
    * @param {Object} data - json data
    * @param {Object|String} urlOptions - url options
-   * @param {Function} finalCallback - (err, result)
    *
-   * @returns {undefined|Promise} - When there's no callback function it returns a Promise
+   * @returns {Promise} - it returns a Promise
    */
-  _requestPost(path, data, urlOptions, finalCallback) {
-    var params, options, requestPrefixUrl, requestFullPath;
-
-    if (isString(urlOptions)) {
-      params = urlOptions;
-    } else if (isObject(urlOptions)) {
-      params = stringify(urlOptions);
-    } else {
-      params = "";
+  _requestPost(
+    path,
+    data,
+    urlOptions,
+    headers = {
+      accept: "application/json; charset=utf-8",
+      "content-type": "application/json; charset=utf-8",
     }
+  ) {
+    var options, requestPrefixUrl, requestFullPath;
+
+    const params = new URLSearchParams(urlOptions);
 
     requestPrefixUrl = this._makeHostUrl(
       this.options.protocol,
@@ -180,32 +172,51 @@ class Client {
     requestPrefixUrl +=
       "/" + [this.options.rootPath, this.options.core, path].join("/");
 
-    requestFullPath = requestPrefixUrl + "?" + params;
+    requestFullPath = requestPrefixUrl + "?" + params.toString();
 
     logger.debug("[_requestPost] requestFullPath: ", requestFullPath);
     logger.debug("[_requestPost] data: ", data);
 
     options = {
       method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        accept: "application/json; charset=utf-8",
-        "content-type": "application/json; charset=utf-8",
-      },
+      body: data,
+      headers,
     };
 
-    return this._callSolrServer(requestFullPath, options, finalCallback);
+    console.log("doing post", {
+      requestFullPath,
+      options,
+      params: params.toString(),
+    });
+
+    return this._callSolrServer(requestFullPath, options);
   }
   /**
    * Stream
    *
-   * @param {Object|String} query
-   * @param {Function} finalCallback - (err, result)
+   * @param {Object} query
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  stream(query, trimEof = true) {
-    return this._requestGet(this.STREAM_PATH, query).then((response) => {
+
+  _queryToObj = (query) => {
+    console.log("queryToObj", query);
+    return query;
+  };
+
+  stream(query, trimEof = true, method = "GET") {
+    return (
+      method === "GET"
+        ? this._requestGet(this.STREAM_PATH, query)
+        : this._requestPost(
+            this.STREAM_PATH,
+            new URLSearchParams(query),
+            {},
+            {
+              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            }
+          )
+    ).then((response) => {
       const result = response["result-set"];
 
       if (!result || !result.docs || !result.docs.length) {
@@ -226,70 +237,62 @@ class Client {
     });
   }
   /**
-   * Make Query instance and return
-   *
-   * @returns {Object}
-   */
-  query() {
-    return new Query();
-  }
-  /**
    * Search
    *
-   * @param {Object|String} query
-   * @param {Function} finalCallback - (err, result)
+   * @param {Object} query
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  search(query, finalCallback) {
-    return this._requestGet(this.SEARCH_PATH, query, finalCallback);
+  search(query, method = "GET") {
+    return method === "GET"
+      ? this._requestGet(this.SEARCH_PATH, query)
+      : this._requestPost(
+          this.SEARCH_PATH,
+          JSON.stringify({ params: this._queryToObj(query) }),
+          ""
+        );
   }
   /**
    * Terms
    *
-   * @param {Object|String} query
-   * @param {Function} finalCallback - (err, result)
+   * @param {Object} query
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  terms(query, finalCallback) {
-    return this._requestGet(this.TERMS_PATH, query, finalCallback);
+  terms(query) {
+    return this._requestGet(this.TERMS_PATH, query);
   }
   /**
    * Mlt
    *
-   * @param {Object|String} query
-   * @param {Function} finalCallback - (err, result)
+   * @param {Object} query
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  mlt(query, finalCallback) {
-    return this._requestGet(this.MLT_PATH, query, finalCallback);
+  mlt(query) {
+    return this._requestGet(this.MLT_PATH, query);
   }
   /**
    * Spell
    *
-   * @param {Object|String} query
-   * @param {Function} finalCallback - (err, result)
+   * @param {Object} query
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  spell(query, finalCallback) {
-    return this._requestGet(this.SPELL_PATH, query, finalCallback);
+  spell(query) {
+    return this._requestGet(this.SPELL_PATH, query);
   }
   /**
    * Update
    *
    * @param {Object} data - json data
    * @param {Object|Function} [options] - update options
-   * @param {Function} finalCallback - (err, result)
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  update(data, options, finalCallback) {
+  update(data, options) {
     var bodyData;
     if (arguments.length < 3 && isFunction(options)) {
-      finalCallback = options;
       options = { commit: true }; // 'commit:true' option is default
     }
     bodyData = {
@@ -301,23 +304,20 @@ class Client {
 
     return this._requestPost(
       this.UPDATE_PATH,
-      bodyData,
-      options,
-      finalCallback
+      JSON.stringify(bodyData),
+      options
     );
   }
   /**
    * Update Extract (files to be indexed via Tika using stream.* param)
    *
    * @param {Object|Function} [options] - update options
-   * @param {Function} finalCallback - (err, result)
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  updateExtract(options, finalCallback) {
+  updateExtract(options) {
     var bodyData;
     if (arguments.length < 2 && isFunction(options)) {
-      finalCallback = options;
       options = { commit: true }; // 'commit:true' option is default
     }
     // We need JSON response
@@ -331,9 +331,8 @@ class Client {
 
     return this._requestPost(
       this.UPDATE_EXTRACT_PATH,
-      bodyData,
-      options,
-      finalCallback
+      JSON.stringify(bodyData),
+      options
     );
   }
   /**
@@ -341,14 +340,12 @@ class Client {
    *
    * @param {String|Object} query - query
    * @param {Object|Function} [options] - delete options
-   * @param {Function} finalCallback - (err, result)
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  delete(query, options, finalCallback) {
+  delete(query, options) {
     var bodyData, bodyQuery;
     if (arguments.length < 3 && isFunction(options)) {
-      finalCallback = options;
       options = { commit: true }; // 'commit:true' option is default
     }
 
@@ -368,61 +365,50 @@ class Client {
 
     return this._requestPost(
       this.UPDATE_PATH,
-      bodyData,
-      options,
-      finalCallback
+      JSON.stringify(bodyData),
+      options
     );
   }
   /**
    * Ping
    *
-   * @param {Function} finalCallback - (err, result)
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  ping(finalCallback) {
-    return this._requestGet(this.PING_PATH, "", finalCallback);
+  ping() {
+    return this._requestGet(this.PING_PATH, "");
   }
   /**
    * Commit
    *
-   * @param {Function} finalCallback - (err, result)
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  commit(finalCallback) {
-    return this._requestPost(
-      this.UPDATE_PATH,
-      {},
-      { commit: true },
-      finalCallback
-    );
+  commit() {
+    return this._requestPost(this.UPDATE_PATH, JSON.stringify({}), {
+      commit: true,
+    });
   }
   /**
    * SoftCommit
    *
-   * @param {Function} finalCallback - (err, result)
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  softCommit(finalCallback) {
-    return this._requestPost(
-      this.UPDATE_PATH,
-      {},
-      { softCommit: true },
-      finalCallback
-    );
+  softCommit() {
+    return this._requestPost(this.UPDATE_PATH, JSON.stringify({}), {
+      softCommit: true,
+    });
   }
   /**
    * Suggest Component
    *
-   * @param {Object|String} query
-   * @param {Function} finalCallback - (err, result)
+   * @param {Object} query
    *
-   * @returns {Undefined|Promise}
+   * @returns {Promise} - it returns a Promise
    */
-  suggest(query, finalCallback) {
-    return this._requestGet(this.SUGGEST_PATH, query, finalCallback);
+  suggest(query) {
+    return this._requestGet(this.SUGGEST_PATH, query);
   }
 }
 
