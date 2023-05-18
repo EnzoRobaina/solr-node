@@ -132,12 +132,6 @@ class Client {
       headers,
     };
 
-    console.log("doing get", {
-      requestFullPath,
-      options,
-      params: params.toString(),
-    });
-
     return this._callSolrServer(requestFullPath, options);
   }
   /**
@@ -183,12 +177,6 @@ class Client {
       headers,
     };
 
-    console.log("doing post", {
-      requestFullPath,
-      options,
-      params: params.toString(),
-    });
-
     return this._callSolrServer(requestFullPath, options);
   }
   /**
@@ -198,11 +186,6 @@ class Client {
    *
    * @returns {Promise} - it returns a Promise
    */
-
-  _queryToObj = (query) => {
-    console.log("queryToObj", query);
-    return query;
-  };
 
   stream(query, trimEof = true, method = "GET") {
     return (
@@ -248,7 +231,7 @@ class Client {
       ? this._requestGet(this.SEARCH_PATH, query)
       : this._requestPost(
           this.SEARCH_PATH,
-          JSON.stringify({ params: this._queryToObj(query) }),
+          JSON.stringify({ params: query }),
           ""
         );
   }

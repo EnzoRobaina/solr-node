@@ -1,6 +1,6 @@
 {
   "name": "enzorobaina-solr-node",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Simple Solr Node Client Project",
   "main": "index.js",
   "scripts": {
