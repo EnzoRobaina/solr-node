@@ -193,6 +193,7 @@ var Client = /*#__PURE__*/function () {
   }, {
     key: "stream",
     value: function stream(query) {
+      var trimEof = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       return this._requestGet(this.STREAM_PATH, query).then(function (response) {
         var result = response["result-set"];
         if (!result || !result.docs || !result.docs.length) {
@@ -202,7 +203,7 @@ var Client = /*#__PURE__*/function () {
         if (error) {
           throw new Error(error);
         }
-        if (result.docs[result.docs.length - 1]["EOF"]) {
+        if (trimEof && result.docs[result.docs.length - 1]["EOF"]) {
           result.docs.pop(); // trims EOF
         }
 

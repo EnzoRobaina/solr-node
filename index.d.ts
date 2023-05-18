@@ -27,7 +27,10 @@ declare module "enzorobaina-solr-node" {
     ping<R extends object>(): Promise<Client.SolrResponse<R>>;
     commit<R extends object>(): Promise<Client.SolrResponse<R>>;
     softCommit<R extends object>(): Promise<Client.SolrResponse<R>>;
-    stream<R extends object>(query?: Client.Query | string): Promise<R[]>;
+    stream<R extends object>(
+      query?: Client.Query | string,
+      trimEof?: boolean
+    ): Promise<R[]>;
   }
 
   namespace Client {

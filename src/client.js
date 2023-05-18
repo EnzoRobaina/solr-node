@@ -204,7 +204,7 @@ class Client {
    *
    * @returns {Undefined|Promise}
    */
-  stream(query) {
+  stream(query, trimEof = true) {
     return this._requestGet(this.STREAM_PATH, query).then((response) => {
       const result = response["result-set"];
 
@@ -218,7 +218,7 @@ class Client {
         throw new Error(error);
       }
 
-      if (result.docs[result.docs.length - 1]["EOF"]) {
+      if (trimEof && result.docs[result.docs.length - 1]["EOF"]) {
         result.docs.pop(); // trims EOF
       }
 
